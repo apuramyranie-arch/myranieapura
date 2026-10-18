@@ -1,51 +1,49 @@
-from flask import Flask, jsonify, request
+
+from flask import Flask, jsonify, request, send_from_directory
+import os
 
 app = Flask(__name__)
 
-# Home Endpoint
-@app.route('/')
-def home():
-    return "Welcome to Myranie Apura Flask API!"
 
-# Student Endpoint
-@app.route('/student')
-def get_student():
+@app.route("/")
+def home():
+    return send_from_directory(".", "index.html")
+
+
+@app.route("/student")
+def student():
     return jsonify({
-        "student_id": "2026-00123",
+        "student_id": "YOUR_STUDENT_ID",
         "name": "Myranie Apura",
         "program": "BSIT",
         "year": 3,
         "section": "A"
     })
 
-# Hello Endpoint
-@app.route('/hello')
-def say_hello():
-    name = request.args.get('name', 'Student')
+
+@app.route("/hello")
+def hello():
+    name = request.args.get("name", "Student").strip()
+
+    if not name:
+        name = "Student"
+
     return jsonify({
-        "message": f"Hello, {name}!"
+        "message": f"Hello, {name}! Welcome to the Student API."
     })
 
-# NEW ENDPOINT 1: About Me
-@app.route('/about')
-def about():
+
+@app.route("/course")
+def course():
     return jsonify({
-        "name": "Myranie Apura",
-        "program": "BSIT",
-        "year": 3,
-        "section": "A",
-        "interest": "Business Woman"
+        "course_code": "BSIT",
+        "course_name": (
+            "Bachelor of Science in Information Technology"
+        ),
+        "department": "Information Technology"
     })
 
-# NEW ENDPOINT 2: Greeting with Input
-@app.route('/greet')
-def greet():
-    name = request.args.get('name', 'Friend')
-    return jsonify({
-        "message": f"Hello {name}! Welcome to Myranie's API.",
-        "creator": "Myranie Apura"
-    })
 
-# Run the Flask application
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
