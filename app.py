@@ -1,49 +1,91 @@
 
-from flask import Flask, jsonify, request, send_from_directory
-import os
+import sqlite3
+from flask import Flask, jsonify, request, render_template
 
 app = Flask(__name__)
 
 
+def get_db_connection():
+    conn = sqlite3.connect("students.db")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
 @app.route("/")
 def home():
-    return send_from_directory(".", "index.html")
+    return render_template("index.html")
 
 
+# Existing student information
 @app.route("/student")
-def student():
+def get_student():
     return jsonify({
-        "student_id": "YOUR_STUDENT_ID",
-        "name": "Myranie Apura",
+        "student_id": "23-0006",
+        "name": "Francine Escultura",
         "program": "BSIT",
         "year": 3,
-        "section": "A"
+        "section": "3B"
     })
 
 
 @app.route("/hello")
-def hello():
-    name = request.args.get("name", "Student").strip()
+def say_hello():
+    name = request.args.get("name", "Student")
+    return jsonify({"message": f"Hello, {name}!"})
 
-    if not name:
-        name = "Student"
 
+@app.route("/hobbies")
+def get_hobbies():
+    hobbies = [
+        "Listening to music",
+        "Watching movies",
+        "Learning programming"
+    ]
     return jsonify({
-        "message": f"Hello, {name}! Welcome to the Student API."
+        "hobbies": hobbies,
+        "total_hobbies": len(hobbies)
     })
 
 
-@app.route("/course")
-def course():
-    return jsonify({
-        "course_code": "BSIT",
-        "course_name": (
-            "Bachelor of Science in Information Technology"
-        ),
-        "department": "Information Technology"
-    })
+# Return all students from SQLite
+@app.route("/students")
+def get_students():
+    conn = get_db_connection()
+    students = conn.execute(
+        "SELECT * FROM students ORDER BY id"
+    ).fetchall()
+    conn.close()
+
+    return jsonify([dict(student) for student in students])
+
+
+# Return one student using the database ID
+@app.route("/students/<int:id>")
+def get_student_by_id(id):
+    conn = get_db_connection()
+    student = conn.execute(
+        "SELECT * FROM students WHERE id = ?", (id,)
+    ).fetchone()
+    conn.close()
+
+    if student is None:
+        return jsonify({"error": "Student not found"}), 404
+
+    return jsonify(dict(student))
+
+
+# Additional endpoint: filter students by program
+@app.route("/students/program/<program>")
+def get_students_by_program(program):
+    conn = get_db_connection()
+    students = conn.execute(
+        "SELECT * FROM students WHERE program = ? ORDER BY id",
+        (program,)
+    ).fetchall()
+    conn.close()
+
+    return jsonify([dict(student) for student in students])
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(debug=True)
