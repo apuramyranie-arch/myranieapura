@@ -1,33 +1,29 @@
 
 import sqlite3
 from pathlib import Path
-from flask import Flask, jsonify, render_template, send_file
+from flask import Flask, jsonify, render_template
 
 app = Flask(__name__)
 
-# Database connection
+# Database location
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE = BASE_DIR / 'students.db'
 
 
+# Connect to SQLite database
 def get_db_connection():
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
 
-# Home page
+# Homepage
 @app.route('/')
 def home():
-    template_file = BASE_DIR / 'templates' / 'index.html'
-
-    if template_file.exists():
-        return render_template('index.html')
-
-    return send_file(BASE_DIR / 'index.html')
+    return render_template('index.html')
 
 
-# API: Get all students
+# API: Display all students
 @app.route('/students')
 def get_students():
     conn = get_db_connection()
@@ -41,7 +37,7 @@ def get_students():
     return jsonify([dict(student) for student in students])
 
 
-# API: Get one student by ID
+# API: Display one student by ID
 @app.route('/students/<int:id>')
 def get_student_by_id(id):
     conn = get_db_connection()
@@ -61,7 +57,7 @@ def get_student_by_id(id):
     return jsonify(dict(student))
 
 
-# Additional API: Get students by program
+# Additional API: Display students by program
 @app.route('/students/program/<program>')
 def get_students_by_program(program):
     conn = get_db_connection()
